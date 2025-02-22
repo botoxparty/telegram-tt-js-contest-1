@@ -1,0 +1,57 @@
+.folder-name-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.folder-name-input input {
+  padding-right: 2.5rem;
+}
+
+.folder-name-input-wrapper .emoji-button.Button.translucent:not(.disabled):not(:disabled) {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+.emoji-button-container {
+  position: relative;
+  
+  .emoji-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.folder-name-emoji-tooltip-menu, .folder-icon-emoji-tooltip-menu {
+  --offset-y: 12.25rem !important;
+  --offset-x: 2rem !important;
+  --color-text: var(--color-primary);
+  --border-radius-default: 1.25rem;
+
+  left: 0.5rem;
+  max-width: calc(var(--symbol-menu-width) + var(--scrollbar-width));
+  height: var(--symbol-menu-height);
+  max-height: 15rem;
+  padding: 0 !important;
+
+
+  :global(body:not(.no-menu-blur)) & {
+    --color-background: var(--color-background-compact-menu);
+    backdrop-filter: blur(25px);
+  }
+
+  @media (max-width: 26rem) {
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    width: calc(100vw - 1rem);
+  }
+}

@@ -46,6 +46,7 @@ import type {
   ApiWallpaper,
   ApiWebSession,
 } from '../../api/types';
+import type { ChatFolderLayout } from '../../components/left/settings/folders/localSettingsFolders';
 import type {
   BotAppPermissions,
   ChatListType,
@@ -266,6 +267,7 @@ export type GlobalState = {
     byId: Record<number, ApiChatFolder>;
     invites: Record<number, ApiChatlistExportedInvite[]>;
     recommended?: ApiChatFolder[];
+    layout?: ChatFolderLayout;
   };
 
   phoneCall?: ApiPhoneCall;

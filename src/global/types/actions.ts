@@ -51,6 +51,7 @@ import type {
   PrivacyVisibility,
 } from '../../api/types';
 import type { ApiEmojiStatusCollectible, ApiEmojiStatusType } from '../../api/types/users';
+import type { ChatFolderLayout } from '../../components/left/main/ChatFolders';
 import type { ApiCredentials } from '../../components/payment/PaymentModal';
 import type { FoldersActions } from '../../hooks/reducers/useFoldersReducer';
 import type { ReducerAction } from '../../hooks/useReducer';
@@ -2521,6 +2522,10 @@ export interface ActionPayloads {
   reportMessageDelivery: {
     chatId: string;
     messageId: number;
+  };
+
+  setChatFolderLayout: {
+    layout: ChatFolderLayout;
   };
 }
 

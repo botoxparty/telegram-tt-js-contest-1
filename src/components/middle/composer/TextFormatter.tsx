@@ -40,6 +40,7 @@ interface ISelectedTextFormats {
   strikethrough?: boolean;
   monospace?: boolean;
   spoiler?: boolean;
+  quote?: boolean;
 }
 
 const TEXT_FORMAT_BY_TAG_NAME: Record<string, keyof ISelectedTextFormats> = {
@@ -51,6 +52,7 @@ const TEXT_FORMAT_BY_TAG_NAME: Record<string, keyof ISelectedTextFormats> = {
   DEL: 'strikethrough',
   CODE: 'monospace',
   SPAN: 'spoiler',
+  Q: 'quote',
 };
 const fragmentEl = document.createElement('div');
 
@@ -387,6 +389,12 @@ const TextFormatter: FC<OwnProps> = ({
     }
   }
 
+  const handleQuoteText = useLastCallback(() => {
+    const text = getSelectedText();
+    document.execCommand('insertHTML', false, `<blockquote>${text}</blockquote>`);
+    onClose();
+  });
+
   if (!shouldRender) {
     return undefined;
   }
@@ -464,6 +472,15 @@ const TextFormatter: FC<OwnProps> = ({
           onClick={handleMonospaceText}
         >
           <Icon name="monospace" />
+        </Button>
+        <div className="TextFormatter-divider" />
+        <Button
+          color="translucent"
+          ariaLabel="Quote text"
+          className={getFormatButtonClassName('quote')}
+          onClick={handleQuoteText}
+        >
+          <Icon name="quote" />
         </Button>
         <div className="TextFormatter-divider" />
         <Button color="translucent" ariaLabel={lang('TextFormat.AddLinkTitle')} onClick={openLinkControl}>

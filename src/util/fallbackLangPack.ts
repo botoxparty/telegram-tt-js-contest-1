@@ -513,4 +513,5 @@ export default {
   FullDateTimeFormat: '%@, %@',
   ProfileOpenAppTerms: 'Terms of Service for Mini Apps',
   ProfileBotOpenAppInfoLink: 'https://telegram.org/tos/mini-apps',
+  ChatFolderLayoutVertical: 'Show folders in vertical layout',
 } as ApiOldLangPack;

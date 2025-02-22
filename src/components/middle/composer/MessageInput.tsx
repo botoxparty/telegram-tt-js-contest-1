@@ -31,6 +31,7 @@ import useDerivedState from '../../../hooks/useDerivedState';
 import useFlag from '../../../hooks/useFlag';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useOldLang from '../../../hooks/useOldLang';
+import { useEditorHistory } from './hooks/useEditorHistory';
 import useInputCustomEmojis from './hooks/useInputCustomEmojis';
 
 import Icon from '../../common/icons/Icon';
@@ -178,6 +179,8 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   const isMobileDevice = isMobile && (IS_IOS || IS_ANDROID);
 
   const [shouldDisplayTimer, setShouldDisplayTimer] = useState(false);
+
+  const history = useEditorHistory(inputRef, chatId);
 
   useEffect(() => {
     setShouldDisplayTimer(Boolean(timedPlaceholderLangKey && timedPlaceholderDate));
@@ -380,6 +383,9 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    // First handle the cursor movement for blockquotes
+    handleCursorMovement(e);
+
     // https://levelup.gitconnected.com/javascript-events-handlers-keyboard-and-load-events-1b3e46a6b0c3#1960
     const { isComposing } = e;
 
@@ -410,6 +416,15 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     } else if (!isComposing && e.key === 'ArrowUp' && !html && !e.metaKey && !e.ctrlKey && !e.altKey) {
       e.preventDefault();
       editLastMessage();
+    } else if (!isComposing && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        history.redo();
+        onUpdate(e.currentTarget.innerHTML);
+      } else {
+        history.undo();
+        onUpdate(e.currentTarget.innerHTML);
+      }
     } else {
       e.target.addEventListener('keyup', processSelectionWithTimeout, { once: true });
     }
@@ -419,6 +434,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     const { innerHTML, textContent } = e.currentTarget;
 
     onUpdate(innerHTML === SAFARI_BR ? '' : innerHTML);
+    history.saveState();
 
     // Reset focus on the input to remove any active styling when input is cleared
     if (
@@ -654,3 +670,39 @@ export default memo(withGlobal<OwnProps>(
     };
   },
 )(MessageInput));
+
+function handleCursorMovement(e: React.KeyboardEvent<HTMLDivElement>) {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  if (!range.collapsed) return;
+
+  const blockquote = range.startContainer.parentElement?.closest('blockquote');
+  if (!blockquote) return;
+
+  // Check if cursor is at the end of the blockquote
+  const isAtEnd = range.startOffset === (range.startContainer.nodeType === Node.TEXT_NODE
+    ? range.startContainer.textContent?.length
+    : range.startContainer.childNodes.length);
+
+  if (isAtEnd && (e.key === 'ArrowRight' || e.key === 'ArrowDown')) {
+    e.preventDefault();
+
+    // Check if there's already content after the blockquote
+    const nextElement = blockquote.nextSibling;
+    if (!nextElement || (nextElement.nodeType === Node.TEXT_NODE && !nextElement.textContent?.trim())) {
+      // Only add new line if there isn't meaningful content after the blockquote
+      const newLine = document.createElement('br');
+      blockquote.insertAdjacentElement('afterend', newLine);
+    }
+
+    // Create a new range after the blockquote
+    const newRange = document.createRange();
+    newRange.setStartAfter(blockquote);
+    newRange.collapse(true);
+    // Apply the new selection
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+  }
+}

@@ -49,6 +49,77 @@
       flex: 1;
       overflow: hidden;
     }
+
+    .Tab {
+      .folder-icon {
+        display: none;
+      }
+    }
+
+    &--vertical {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+
+      .TabList {
+        flex-direction: column;
+        width: 7rem;
+        border-right: 1px solid var(--color-borders);
+        
+        .Tab {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          width: 100%;
+          border-bottom-left-radius: var(--border-radius-messages-small);
+          border-bottom-right-radius: var(--border-radius-messages-small);
+
+          &_inner {
+            min-width: 3rem;
+            justify-content: center;
+            .platform.animate {
+              display: none;
+            }
+          }
+
+          .folder-tab-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+          }
+          
+          .folder-icon {
+            font-size: 2.0rem;
+            color: var(--color-text-secondary);
+            font-style: normal;
+            display: block;
+          }
+
+          .badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+          }
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          &--active {
+            .folder-icon {
+              color: var(--color-primary);
+            }
+          }
+        }
+      }
+
+      .ChatList {
+        flex: 1;
+        min-width: 0;
+      }
+    }
   }
 
   .RecentContacts,

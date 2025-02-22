@@ -1,0 +1,27 @@
+.SettingsFolderIconEmojiTooltip.EmojiTooltip {
+  display: flex;
+  flex-wrap: wrap;
+
+  padding: 0;
+
+  overflow-y: scroll;
+
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+
+  .EmojiButton {
+    flex: 0 0 2.25rem;
+    margin-right: 0;
+  }
+}
+
+
+.bubble.folder-icon-emoji-tooltip-menu {
+  min-width: 20.8rem;
+}
+
+.bubble.menu-container.folder-icon-emoji-tooltip-menu {
+  left: 20rem;
+}

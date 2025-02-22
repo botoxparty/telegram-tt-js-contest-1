@@ -14,6 +14,7 @@ import {
   MACOS_DEFAULT_MESSAGE_TEXT_SIZE_PX,
 } from '../config';
 import { IS_IOS, IS_MAC_OS } from '../util/windowEnvironment';
+import { ChatFolderLayout } from '../components/left/main/ChatFolders';
 
 export const INITIAL_PERFORMANCE_STATE_MAX: PerformanceType = {
   animatedEmoji: true,
@@ -282,6 +283,7 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
       canDisplayChatInTitle: true,
       shouldAllowHttpTransport: true,
       shouldWarnAboutSvg: true,
+      chatFolderLayout: ChatFolderLayout.Vertical,
     },
     themes: {
       light: {

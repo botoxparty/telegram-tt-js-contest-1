@@ -1,12 +1,19 @@
 import type { FC } from '../../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useMemo, useState,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
 } from '../../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../../global';
 
 import type { ApiChatFolder } from '../../../../api/types';
 
-import { ALL_FOLDER_ID, STICKER_SIZE_FOLDER_SETTINGS } from '../../../../config';
+import {
+  ALL_FOLDER_ID,
+  STICKER_SIZE_FOLDER_SETTINGS,
+} from '../../../../config';
 import { getFolderDescriptionText } from '../../../../global/helpers';
 import { selectIsCurrentUserPremium } from '../../../../global/selectors';
 import { selectCurrentLimit } from '../../../../global/selectors/limits';
@@ -24,9 +31,11 @@ import usePreviousDeprecated from '../../../../hooks/usePreviousDeprecated';
 import AnimatedIconWithPreview from '../../../common/AnimatedIconWithPreview';
 import Icon from '../../../common/icons/Icon';
 import Button from '../../../ui/Button';
+import Checkbox from '../../../ui/Checkbox';
 import Draggable from '../../../ui/Draggable';
 import ListItem from '../../../ui/ListItem';
 import Loading from '../../../ui/Loading';
+import { ChatFolderLayout } from '../../main/ChatFolders';
 
 type OwnProps = {
   isActive?: boolean;
@@ -41,6 +50,7 @@ type StateProps = {
   recommendedChatFolders?: ApiChatFolder[];
   maxFolders: number;
   isPremium?: boolean;
+  chatFolderLayout: ChatFolderLayout;
 };
 
 type SortState = {
@@ -62,6 +72,7 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
   isPremium,
   recommendedChatFolders,
   maxFolders,
+  chatFolderLayout,
 }) => {
   const {
     loadRecommendedChatFolders,
@@ -69,6 +80,7 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
     openLimitReachedModal,
     openDeleteChatFolderModal,
     sortChatFolders,
+    setChatFolderLayout,
   } = getActions();
 
   const [state, setState] = useState<SortState>({
@@ -143,41 +155,56 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
       return {
         id: folder.id,
         title: folder.title,
-        subtitle: getFolderDescriptionText(lang, folder, chatsCountByFolderId[folder.id]),
+        subtitle: getFolderDescriptionText(
+          lang,
+          folder,
+          chatsCountByFolderId[folder.id],
+        ),
         isChatList: folder.isChatList,
         noTitleAnimations: folder.noTitleAnimations,
       };
     });
   }, [folderIds, foldersById, lang, chatsCountByFolderId]);
 
-  const handleCreateFolderFromRecommended = useCallback((folder: ApiChatFolder) => {
-    if (Object.keys(foldersById).length >= maxFolders - 1) {
-      openLimitReachedModal({
-        limit: 'dialogFilters',
-      });
+  const handleCreateFolderFromRecommended = useCallback(
+    (folder: ApiChatFolder) => {
+      if (Object.keys(foldersById).length >= maxFolders - 1) {
+        openLimitReachedModal({
+          limit: 'dialogFilters',
+        });
 
-      return;
-    }
+        return;
+      }
 
-    addChatFolder({ folder });
-  }, [foldersById, maxFolders, addChatFolder, openLimitReachedModal]);
+      addChatFolder({ folder });
+    },
+    [foldersById, maxFolders, addChatFolder, openLimitReachedModal],
+  );
 
-  const handleDrag = useCallback((translation: { x: number; y: number }, id: string | number) => {
-    const delta = Math.round(translation.y / FOLDER_HEIGHT_PX);
-    const index = state.orderedFolderIds?.indexOf(id as number) || 0;
-    const dragOrderIds = state.orderedFolderIds?.filter((folderId) => folderId !== id);
+  const handleDrag = useCallback(
+    (translation: { x: number; y: number }, id: string | number) => {
+      const delta = Math.round(translation.y / FOLDER_HEIGHT_PX);
+      const index = state.orderedFolderIds?.indexOf(id as number) || 0;
+      const dragOrderIds = state.orderedFolderIds?.filter(
+        (folderId) => folderId !== id,
+      );
 
-    if (!dragOrderIds || !isBetween(index + delta, 0, folderIds?.length || 0)) {
-      return;
-    }
+      if (
+        !dragOrderIds
+        || !isBetween(index + delta, 0, folderIds?.length || 0)
+      ) {
+        return;
+      }
 
-    dragOrderIds.splice(index + delta + (isPremium ? 0 : 1), 0, id as number);
-    setState((current) => ({
-      ...current,
-      draggedIndex: index,
-      dragOrderIds,
-    }));
-  }, [folderIds?.length, isPremium, state.orderedFolderIds]);
+      dragOrderIds.splice(index + delta + (isPremium ? 0 : 1), 0, id as number);
+      setState((current) => ({
+        ...current,
+        draggedIndex: index,
+        dragOrderIds,
+      }));
+    },
+    [folderIds?.length, isPremium, state.orderedFolderIds],
+  );
 
   const handleDragEnd = useCallback(() => {
     setState((current) => {
@@ -195,6 +222,16 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
     return !isPremium || Object.keys(foldersById).length < maxFolders - 1;
   }, [foldersById, isPremium, maxFolders]);
 
+  const isVerticalLayout = chatFolderLayout === ChatFolderLayout.Vertical;
+
+  const handleLayoutToggle = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newLayout = e.target.checked ? ChatFolderLayout.Vertical : ChatFolderLayout.Horizontal;
+      setChatFolderLayout({ layout: newLayout });
+    },
+    [],
+  );
+
   return (
     <div className="settings-content no-border custom-scroll">
       <div className="settings-content-header">
@@ -210,7 +247,7 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
 
         {canCreateNewFolder && (
           <Button
-          // TODO: Refactor button component to handle icon placemenet with props
+            // TODO: Refactor button component to handle icon placemenet with props
             className="settings-button with-icon mb-2"
             color="primary"
             size="smaller"
@@ -225,17 +262,70 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
         )}
       </div>
 
+      <div className="settings-item">
+        <Checkbox
+          label={lang('ChatFolderLayoutVertical')}
+          checked={isVerticalLayout}
+          onChange={handleLayoutToggle}
+        />
+      </div>
+
       <div className="settings-item pt-3">
-        <h4 className="settings-item-header mb-3" dir={lang.isRtl ? 'rtl' : undefined}>{lang('Filters')}</h4>
+        <h4
+          className="settings-item-header mb-3"
+          dir={lang.isRtl ? 'rtl' : undefined}
+        >
+          {lang('Filters')}
+        </h4>
 
-        <div className="settings-sortable-container" style={`height: ${(folderIds?.length || 0) * FOLDER_HEIGHT_PX}px`}>
-          {userFolders?.length ? userFolders.map((folder, i) => {
-            const isBlocked = i > maxFolders - 1;
-            const isDragged = state.draggedIndex === i;
-            const draggedTop = (state.orderedFolderIds?.indexOf(folder.id) ?? 0) * FOLDER_HEIGHT_PX;
-            const top = (state.dragOrderIds?.indexOf(folder.id) ?? 0) * FOLDER_HEIGHT_PX;
+        <div
+          className="settings-sortable-container"
+          style={`height: ${(folderIds?.length || 0) * FOLDER_HEIGHT_PX}px`}
+        >
+          {userFolders?.length ? (
+            userFolders.map((folder, i) => {
+              const isBlocked = i > maxFolders - 1;
+              const isDragged = state.draggedIndex === i;
+              const draggedTop = (state.orderedFolderIds?.indexOf(folder.id) ?? 0)
+                * FOLDER_HEIGHT_PX;
+              const top = (state.dragOrderIds?.indexOf(folder.id) ?? 0)
+                * FOLDER_HEIGHT_PX;
 
-            if (folder.id === ALL_FOLDER_ID) {
+              if (folder.id === ALL_FOLDER_ID) {
+                return (
+                  <Draggable
+                    key={folder.id}
+                    id={folder.id}
+                    onDrag={handleDrag}
+                    onDragEnd={handleDragEnd}
+                    style={`top: ${isDragged ? draggedTop : top}px;`}
+                    knobStyle={`${lang.isRtl ? 'left' : 'right'}: 0.375rem;`}
+                    isDisabled={!isPremium || !isActive}
+                  >
+                    <ListItem
+                      key={folder.id}
+                      className="drag-item mb-2 no-icon settings-sortable-item"
+                      narrow
+                      inactive
+                      multiline
+                      isStatic
+                      allowSelection
+                    >
+                      <span className="title">
+                        {renderTextWithEntities({
+                          text: folder.title.text,
+                          entities: folder.title.entities,
+                          noCustomEmojiPlayback: folder.noTitleAnimations,
+                        })}
+                      </span>
+                      <span className="subtitle">
+                        {lang('FoldersAllChatsDesc')}
+                      </span>
+                    </ListItem>
+                  </Draggable>
+                );
+              }
+
               return (
                 <Draggable
                   key={folder.id}
@@ -243,17 +333,34 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
                   onDrag={handleDrag}
                   onDragEnd={handleDragEnd}
                   style={`top: ${isDragged ? draggedTop : top}px;`}
-                  knobStyle={`${lang.isRtl ? 'left' : 'right'}: 0.375rem;`}
-                  isDisabled={!isPremium || !isActive}
+                  knobStyle={`${lang.isRtl ? 'left' : 'right'}: 3rem;`}
+                  isDisabled={isBlocked || !isActive}
                 >
                   <ListItem
-                    key={folder.id}
                     className="drag-item mb-2 no-icon settings-sortable-item"
                     narrow
-                    inactive
+                    secondaryIcon="more"
                     multiline
-                    isStatic
-                    allowSelection
+                    contextActions={[
+                      {
+                        handler: () => {
+                          openDeleteChatFolderModal({ folderId: folder.id });
+                        },
+                        destructive: true,
+                        title: lang('Delete'),
+                        icon: 'delete',
+                      },
+                    ]}
+                    // eslint-disable-next-line react/jsx-no-bind
+                    onClick={() => {
+                      if (isBlocked) {
+                        openLimitReachedModal({
+                          limit: 'dialogFilters',
+                        });
+                      } else {
+                        onEditFolder(foldersById[folder.id]);
+                      }
+                    }}
                   >
                     <span className="title">
                       {renderTextWithEntities({
@@ -261,75 +368,39 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
                         entities: folder.title.entities,
                         noCustomEmojiPlayback: folder.noTitleAnimations,
                       })}
+                      {isBlocked && (
+                        <Icon
+                          name="lock-badge"
+                          className="settings-folders-blocked-icon"
+                        />
+                      )}
                     </span>
-                    <span className="subtitle">{lang('FoldersAllChatsDesc')}</span>
+                    <span className="subtitle">
+                      {folder.isChatList && (
+                        <Icon name="link" className="mr-1" />
+                      )}
+                      {folder.subtitle}
+                    </span>
                   </ListItem>
                 </Draggable>
               );
-            }
-
-            return (
-              <Draggable
-                key={folder.id}
-                id={folder.id}
-                onDrag={handleDrag}
-                onDragEnd={handleDragEnd}
-                style={`top: ${isDragged ? draggedTop : top}px;`}
-                knobStyle={`${lang.isRtl ? 'left' : 'right'}: 3rem;`}
-                isDisabled={isBlocked || !isActive}
-              >
-                <ListItem
-                  className="drag-item mb-2 no-icon settings-sortable-item"
-                  narrow
-                  secondaryIcon="more"
-                  multiline
-                  contextActions={[
-                    {
-                      handler: () => {
-                        openDeleteChatFolderModal({ folderId: folder.id });
-                      },
-                      destructive: true,
-                      title: lang('Delete'),
-                      icon: 'delete',
-                    },
-                  ]}
-                  // eslint-disable-next-line react/jsx-no-bind
-                  onClick={() => {
-                    if (isBlocked) {
-                      openLimitReachedModal({
-                        limit: 'dialogFilters',
-                      });
-                    } else {
-                      onEditFolder(foldersById[folder.id]);
-                    }
-                  }}
-                >
-                  <span className="title">
-                    {renderTextWithEntities({
-                      text: folder.title.text,
-                      entities: folder.title.entities,
-                      noCustomEmojiPlayback: folder.noTitleAnimations,
-                    })}
-                    {isBlocked && <Icon name="lock-badge" className="settings-folders-blocked-icon" />}
-                  </span>
-                  <span className="subtitle">
-                    {folder.isChatList && <Icon name="link" className="mr-1" />}
-                    {folder.subtitle}
-                  </span>
-                </ListItem>
-              </Draggable>
-            );
-          }) : userFolders && !userFolders.length ? (
+            })
+          ) : userFolders && !userFolders.length ? (
             <p className="settings-item-description my-4" dir="auto">
               You have no folders yet.
             </p>
-          ) : <Loading />}
+          ) : (
+            <Loading />
+          )}
         </div>
       </div>
 
-      {(recommendedChatFolders && Boolean(recommendedChatFolders.length)) && (
+      {recommendedChatFolders && Boolean(recommendedChatFolders.length) && (
         <div className="settings-item pt-3">
-          <h4 className="settings-item-header mb-3" dir={lang.isRtl ? 'rtl' : undefined}>
+          <h4
+            className="settings-item-header mb-3"
+            dir={lang.isRtl ? 'rtl' : undefined}
+          >
             {lang('FilterRecommended')}
           </h4>
 
@@ -371,13 +442,15 @@ const SettingsFoldersMain: FC<OwnProps & StateProps> = ({
   );
 };
 
-export default memo(withGlobal<OwnProps>(
-  (global): StateProps => {
+export default memo(
+  withGlobal<OwnProps>((global): StateProps => {
     const {
       orderedIds: folderIds,
       byId: foldersById,
       recommended: recommendedChatFolders,
     } = global.chatFolders;
+
+    const chatFolderLayout = global.settings.byKey.chatFolderLayout;
 
     return {
       folderIds,
@@ -385,6 +458,7 @@ export default memo(withGlobal<OwnProps>(
       isPremium: selectIsCurrentUserPremium(global),
       recommendedChatFolders,
       maxFolders: selectCurrentLimit(global, 'dialogFilters'),
+      chatFolderLayout,
     };
-  },
-)(SettingsFoldersMain));
+  })(SettingsFoldersMain),
+);
